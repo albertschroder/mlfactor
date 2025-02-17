@@ -1,0 +1,175 @@
+\section{Tree based methods}
+
+Popular forecasting tools when working with tabular data.
+
+\subsection{Simple trees}
+
+\subsubsection{Principle}
+Decision trees seek to partition datasets into homogeneous clusters. Given an exogenous variable $\boldsymbol{Y}$ and features $\boldsymbol{X}$ decision trees iteratively splits the sample into groups that are homogenous in $\boldsymbol{Y}$. The splits are made according to one variable within the set of features.
+
+When $\boldsymbol{Y}$ consists of real numbers trees are regression trees, and when $\boldsymbol{Y}$ is categorical we talk about classification trees.
+
+The purpose of the exercise is to find the characteristics that allow to split firms into the ones that will perform well versus those likely to fare more poorly.
+
+Given a sample ($y_{i}$ and $\mathbf{x}_{i}$) of size $I$ a regression tree seeks splitting points that minimize total variation of $y_{i}$ inside the two child clusters (that do not need to have the same size).
+
+First, it finds, for each feature $x_{i}^{(k)}$, the best splitting point. Second, it selects the feature that achieves the highest level of homogeneity in $\mathbf{Y}$.
+Homogeneity in regression trees is closely linked to variance. since we want the $y_{i}$ inside each cluster to be similar we seek to minimize their variability (or dispersion) inside each cluster, and then sum the two figures. We cannot sum the variances because this would not take into account the relative sizes of clusters. Hence, we work with total variation (variance times the number of elements in each cluster).
+
+The first step is to find the best split for each feature, that is solve $\mathrm{argmin}_{c^{(k)}} V^{(k)}_{I}(c^{(k)})$ with 
+\begin{equation}
+    V_{I}^{(k)} (c^{(k)}) = \sum_{x_{i}^{(k)} < c^{(k)}} (y_{i} - m_{I}^{k, -}(c^{(k)}))^{2} +  \sum_{x_{i}^{(k)} > c^{(k)}} (y_{i} - m_{I}^{k, +}(c^{(k)}))^{2}, 
+\end{equation} 0 
+where
+\begin{align*}
+    m_{I}^{k, -} &= \frac{1}{\# \{ i, x_{i}^{(k)} < c^{(k)} \} } \sum_{\{ x_{i}^{(k)} < c^{(k)} \} } y_{i} \\
+    m_{I}^{k, +} &= \frac{1}{\# \{ i, x_{i}^{(k)} > c^{(k)} \} } \sum_{\{ x_{i}^{(k)} > c^{(k)} \} } y_{i}
+\end{align*}
+are the average values of $\boldsymbol{Y}$ , conditional on $\boldsymbol{X}^{(k)}$ being smaller or larger than $c$. For feature $k$, the optimal split $c^{k,\ast}$ is thus the one for which the total dispersion over the two subgroups is the smallest.
+
+The optimal splits satisfy $c^{k, \ast} = \mathrm{argmin}_{c^{(k)}} V_{I}^{(k)} (c^{(k)})$. Of all the possible splitting variables, the tree will choose the one that minimizes the total dispersion not only over all splits, but also over all variables: $k^{\ast} = \mathrm{argmin}_{k} V_{I}^{(k)} (c^{k, \ast})$.
+
+There are several criteria that can determine when to stop the splitting process. One simple criterion is to fix a maximum number of levels (the depth) for the tree. A usual condition is to impose a minimum gain that is expected for each split. If the reduction in dispersion after the split is only marginal and below a specified threshold, then the split is not executed.
+
+When the tree is built (trained), a prediction for new instances is easy to make. Given its feature values, the instance ends up in one leaf of the tree. Each leaf has an average value for the label: this is the predicted outcome. Of course, this only works when the label is numerical. 
+
+\subsubsection{Further details on classification}
+Classification exercises are somewhat more complex than regression tasks. The most obvious difference is the measure of dispersion or heterogeneity. This loss function which must take into account the fact that the final output is not a simple number, but a vector. The output $\tilde{\mathbf{y}}_i$ has as many elements as there are categories in the label and each element is the probability that the instance belongs to the corresponding category.
+
+Inside a tree, labels are aggregated at each cluster level. A typical output would look like (0.6,0.1,0.3): they are the proportions of each class represented within the cluster. In this case, the cluster has 60\% of buy, 10\% of hold and 30\% of sell.
+
+The loss function must take into account this multidimensionality of the label. When building trees, since the aim is to favor homogeneity, the loss penalizes outputs that are not concentrated towards one class.
+
+The algorithm is thus seeking purity: it searches a splitting criterion that will lead to clusters that are as pure as possible. If there are $J$ classes, we denote these proportions with $p_{J}$. For each leaf, the usual loss functions are:
+\begin{itemize}
+    \item the Gini impurity index: $1- \sum_{j=1}^{J} p_{j}^{2}$;
+    \item the misclassification error: $1 - \max_{j} p_{j}$;
+    \item entropy: $- \sum _{j=1}^{J} \log(p_{j})p_{j}$.
+\end{itemize}
+
+Once the tree is grown, new instances automatically belong to one final leaf. This leaf is associated to the proportions of classes it nests. Usually, to make a prediction, the class with highest proportion (or probability) is chosen when a new instance is associated with the leaf.
+
+\subsubsection{Pruning criteria}
+When building a tree, the splitting process can be pursued until the full tree is grown, that is, when:
+\begin{itemize}
+    \item all instances belong to separate leaves, and/or
+    \item all leaves comprise instances that cannot be further segregated based on the current set of features.
+\end{itemize}
+At this stage, the splitting process cannot be pursued.
+
+Obviously, fully grown trees often lead to almost perfect fits when the predictors are relevant, numerous and numerical. Nonetheless, the fine grained idiosyncrasies of the training sample are of little interest for out-of-sample predictions. For instance, being able to perfectly match the patterns of 2000 to 2006 will probably not be very interesting in the period from 2007 to 2009. The most reliable sections of the trees are those closest to the root because they embed large portions of the data: the average values in the early clusters are trustworthy because the are computed on a large number of observations. The first splits are those that matter the most because they determine the most general patterns. The deepest splits only deal with the peculiarities of the sample.
+
+Thus, it is imperative to limit the size of the tree to avoid overfitting. There are several ways to prune the tree and all depend on some particular criteria. We list a few of them below:
+\begin{itemize}
+    \item Impose a minimum number of instances for each terminal node (leaf). This ensures that each final cluster is composed of a sufficient number of observations. Hence, the average value of the label will be reliable because it is calculated on a large amount of data.
+    \item Similarly, it can be imposed that a cluster has a minimal size before even considering any further split. This criterion is of course related to the one above.
+    \item Require a certain threshold of improvement in the fit. If a split does not sufficiently reduce the loss, then it can be deemed unnecessary. The user specifies a small number $\epsilon > 0$ and a split is only validated if the loss obtained post-split is smaller than $1-\epsilon $ times the loss before the split.
+    \item Limit the depth of the tree. The depth is defined as the overal maximum number of splits between the root and any leaf of the tree.
+\end{itemize}
+
+\subsubsection{Code and interpretation}
+See the jupyter notebook for the code. The plot below is a simple tree.
+
+Notice that one peculiarity of trees is their possible heterogeneity in cluster sizes. Sometimes, a few clusters gather almost all of the observations while a few small groups embed some outliers. This is not a favorable property of trees, as small groups are more likely to be flukes and may fail to generalize out-of-sample.
+
+This is why we imposed restrictions during the construction of the tree. The first one (minbucket = 3500 in the code) imposes that each cluster consists of at least 3500 instances. The second one (minsplit) further imposes that a cluster comprises at least 8000 observations in order to pursue the splitting process. These values logically depend on the size of the training sample. The cp = 0.0001 parameter in the code requires any split to reduce the loss below 0.9999 times its original value before the split. Finally, the maximum depth of three essentially means that there are at most three splits between the root of the tree and any terminal leaf.
+
+Once the model has been trained (i.e., the tree is grown), a prediction for any instance is the average value of the label within the cluster where the instance should land.
+
+As a verification of the first splits, we plot the smoothed average of future returns, conditionally on market capitalization, price-to-book ratio and trading volume.
+
+The graph shows the relevance of clusters based on market capitalizations and price-to-book ratios. For low score values of these two features, the average return is high (close to +4\% on a monthly basis on the left of the curves). The pattern is more pronounced compared to volume for instance.
+
+Finally, we assess the predictive quality of a single tree on the testing set.
+\begin{lstlisting}
+y_train = training_sample['R1M_Usd'].values
+X_train = training_sample[features].values
+y_test = testing_sample['R1M_Usd'].values
+X_test = testing_sample[features].values
+
+
+fit_tree2 = tree.DecisionTreeRegressor( # Definining the model
+    min_samples_split = 4000, # Min nb of obs required to continue splitting
+    max_depth = 5, # Maximum depth (i.e. tree levels)
+    ccp_alpha=0.0001, # complexity parameters
+    min_samples_leaf =1500 # Min nb of obs required in each terminal node (leaf)
+        )
+fit_tree2 = fit_tree2.fit(X_train, y_train) # Fitting the model
+
+mse = np.mean((fit_tree2.predict(X_test) - y_test)**2)
+print(f'MSE: {mse}')
+hitratio = np.mean(fit_tree2.predict(X_test) * y_test > 0)
+print(f'Hit Ratio: {hitratio}')
+\end{lstlisting}
+, which shows that  $\mathrm{MSE}: 0.036997$ and $\mathrm{Hit Ratio}: 0.546035$.
+
+\subsection{Random forrest}
+These models combine prediction models.
+
+\subsubsection{Principle}
+Most of the time, when having several modelling options at hand, it is not obvious upfront which individual model is the best, hence a combination seems a reasonable path towards the diversification of prediction errors (when they are not too correlated).
+
+There are two ways to create multiple predictors from simple trees, and random forests combine both: 
+\begin{itemize}
+    \item first, the model can be trained on similar yet different datasets. One way to achieve this is via bootstrap.
+    \item second, the data can be altered by curtailing the number of predictors. Alternative models are built based on different sets of features. The user chooses how many features to retain and then the algorithm selects these features randomly at each try.
+\end{itemize}
+
+Hence, it becomes simple to grow many different trees and the ensemble is simply a weighted combination of all trees. Usually, equal weights are used, which is an agnostic and robust choice.
+
+Notably, Breiman (2001) shows that as the number of trees grows to infinity, the inaccuracy converges to some finite number which explains why random forests are not prone to overfitting.
+
+\subsubsection{Code and results}
+
+See jupyter notebook.
+
+\subsection{Boosted trees: Adaboost}
+
+
+In boosting, it is sought to iteratively improve the model whenever a new tree is added. Adaboost improves the learning process by progressively focusing on the instances that yield the largest errors.
+
+\subsubsection{Methodology}
+
+The general structure of the algorithm.
+\begin{itemize}
+    \item Set equal weights $w_{i} = I^{-1}$;
+    \item For $m = 1,\dots, M$ do
+    \begin{enumerate}
+        \item Find a learner $l_{m}$ that minimizes the weighted loss $\sum _{i=1}^{I}w_{i}L(l_{m}(\mathbf{x}_{i}), \mathbf{y}_{i})$.
+        \item Compute a learner weight
+        \begin{equation}
+            a_{m} = f_{a}(\mathbf{w}, l_{m}(\mathbf{x}), \mathbf{y});
+        \end{equation}
+        \item Update the instance weights
+        \begin{equation}
+            w_{i} \leftarrow w_{i} e^{ f_{w}(l_{m}(\mathbf{x}_{i}), \mathbf{y}_{i}) };
+        \end{equation}
+        \item Normalize the $w_{i}$ to sum to one;
+    \end{enumerate}
+    \item The output of the instance $x_{i}$ is a simple function of $\sum _{m=1}^{M}a_{m}l_{m}(\mathbf{x}_{i})$
+    \begin{equation}
+        \tilde{y}_{i} = f_{y} \left(\sum _{m=1}^{M}a_{m}l_{m}(\mathbf{x}_{i})\right)
+    \end{equation}
+\end{itemize}
+This formulation work for many versions of Adaboost and the function $f_{a}$ and $f_{y}$ are specified below.
+
+The first step is to find a tree ($l_{m}$) that minimizes a weighted loss. The loss function depends on the application. The second and third step define the way the algorithm adapts sequentially. A more sophisticated approach compared to uniform weights, is to assign a tailored weight to each learner. A property of $f_{a}$  should be that a learner that yields a smaller error should have a larger weight because it is more accurate. 
+
+The third step s is to change the weights of observations. Since the models seeks to improve the learning process, $f_{w}$ is constructed to give more weight on observations for which the current model does not do a good job. The next learner (tree) will focus more on these pathological cases.
+
+The final step is a scaling procedure. Below are two different weighting functions.
+
+\begin{table}[H]
+    \centering
+    \resizebox{\textwidth}{!}{
+        \begin{tabular}{ccc}
+            \toprule
+              & Bin. classif & Regression \\ \midrule
+            Individual error & $\epsilon _{i} = \mathbf{1}_{\{ y_{i} \neq  l_{m}(\mathbf{x}_{i}) \} }$ & $\epsilon_i=\frac{	y_i- l_m(\textbf{x}_i)	}{\underset{i}{\max}y_i- l_m(\textbf{x}_i)}$ \\ 
+            Weight of learner via §$f_{a}$ & $f_{a} = \log \left(\frac{1-\epsilon }{\epsilon } \right)$ with $\epsilon  = I^{-1} \sum _{i=1}^{I} w_{i} \epsilon _{i}$ & $f_{a} = \log \left(\frac{1-\epsilon }{\epsilon } \right)$ with $\epsilon  = I^{-1} \sum _{i=1}^{I} w_{i} \epsilon _{i}$ \\
+            Weight of instances via $f_{w}(i)$ & $f_{w} = f_{a}\epsilon _{i}$ & $f_{w} = f_{a}\epsilon _{i}$ \\
+            Output function via $f_{y}$ & $f_{y}(x) = \mathrm{sign}(x)$ & weighted median of predictions \\
+            \bottomrule
+        \end{tabular}
+    }
+\end{table}

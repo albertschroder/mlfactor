@@ -1,0 +1,76 @@
+\section{Notations and data}
+
+\subsection{Notations}
+
+\subsubsection{General notation}
+Bold notations indicate vectors and matrices. We use capital letters for matrices and lower case letters for vectors. $\mathbf{v}'$ and $\mathbf{M}'$ denote the transpose. $\mathbf{M} = [m]_{i,j}$, where $i$ is the row index and $j$ is the column index.
+
+Canonical matrices: $\mathbf{I}_{N}$ is the $(N \times N)$ identity matrix.
+
+\subsubsection{Machine learning notation}
+Two sets of notation. Machine learning notation in which the labels (also called output, dependent variables or predicted variables) $\mathbf{y} = y_{i}$ are approximated by functions of features $\mathbf{X}_{i}=(x_{i,1},\ldots,x_{i,K})$. Dimension of the feature matrix $\mathbf{X}$ is $I \times K$;  there are 
+$I$ instances, records, or observations and each one of them has $K$ attributes, features, inputs, or predictors which will serve as independent variables. $\mathbf{x}_{i}$ is one instance (one row) of $\mathbf{X}$ and $\mathbf{x}_{k}$ is one feature (one column) vector of $\mathbf{X}$.
+
+\subsubsection{Finance notation}
+The second notation type pertains to finance and will directly relate to the first. We will often work with discrete returns $r_{t,n} = p_{t,n}/p_{t-1,n} - 1$. $t$ is the time index and $n$ is the asset index. The number of return dates is $T$, number of assets is $N$. The features or characteristics of assets will be denoted with $x_{t,n}^{(k)}$; the time-$t$ value of the $k^{th}$ attribute of firm/asset $n$. Stacked notation, $\mathbf{x}_{t,n}$, is the vector of characteristics of asset $n$ at time $t$. $\mathbf{r}_{t}$ is all returns at time $t$, and $\mathbf{r}_{n}$ is all returns of assets $n$. For the riskless asset we wil use $r_{t,f}$.
+
+\subsubsection{Notation link}
+The link between notation is: One \textit{instance} (or \textit{observation}) $i$ will consist of one couple $(t,n)$ of on e particular date and one particular firm (if data is rectangular with no missing field, $I = T \times N$). The label will usually be some performance measure of the firm computed over some future period, while the features will consist of the firm attributes at time 
+$t$.
+
+\subsubsection{Probabilistic notation}
+The expectation operator is $\mathbb{E}[ \cdot ]$ and the conditional expectation $\mathbb{E}_{t}(\cdot)$, where the corresponding filtration $\mathcal{F}_{t}$ corresponds to all information available at time $t$; $\mathbb{E}_{t}[ \cdot ]  = \mathbb{E}[ \cdot | \mathcal{F}_{t}]$. 
+
+$\mathbb{V}[ \cdot ]$ is the variance operator. Probabilities will be written $P$, but at times it will be $\mathbb{P}$. 
+
+Probability density functions (pdfs) will be denoted with lowercase letters $(f)$ and cumulative distribution functions (cdfs) with uppercase letters $(F)$. Equality in distribution is $X \overset{d}{=} Y \iff F_{X}(z) = F_{Y}(z)$for all $z$ on the support of the variables. For a random process $X_{t}$ we say that it is \textit{stationary} if $X_{t}$ is constant trough time, i.e. $X_{t} \overset{d}{=} X_{s}$, where $\overset{d}{=}$ is equality in distribution.
+
+Some asymptotic behaviors will be characterized with the usual Landau notation $o( \cdot )$ and $O( \cdot )$. $\varpropto$ refers to proportionality: $x \varpropto y$ means that $x$ is proportional to $y$. Derivatives use standard notation $\frac{\partial }{\partial x}$, and the compact symbol $\nabla$ is used when all derivatives are computed (gradient vector).
+
+\subsubsection{Equations and functions}
+In equations, the left-hand side and right-hand side can be written more compactly: l.h.s. and r.h.s., respectively.
+
+Finally, we turn to functions. We list a few below:
+\begin{itemize}
+    \item $1_{\{ x \}}$: the indicator function of the condition $x$.
+    \item $\phi( \cdot )$ and $\Phi( \cdot )$ are Gaussian pdf and cdf.
+    \item $\operatorname{card}( \cdot ) = \#( \cdot )$ are two notations for the cardinal function which evaluates the number of elements in a given set.
+    \item $\lfloor \cdot \rfloor$ is the integer part function.
+    \item for a real number $x$, $[x]^{+}$ is the positive part of $x$, i.e., $\max(0,x)$.
+    \item $\tanh( \cdot )$ is the hyperbolic tangent: $\tanh (x) = \frac{e^{ x }-e^{ -x }}{e^{ x }+e^{ -x }}$.
+    \item $\operatorname{ReLu}( \cdot )$ is the rectified linear unit: $\operatorname{ReLu}( x ) = \max(0,x)$.
+    \item $s( \cdot )$ is the softmax function: $s(\mathbf{x})_{i} = \frac{e^{ x_{i} }}{\sum _{j=1}^{J}e^{x_{j}}}$ where the subscript $i$ refers to the $i^{th}$ element of the vector.
+\end{itemize}
+
+
+\subsection{Dataset}
+Throughout the book, and for the sake of reproducibility, we will illustrate the concepts we present with examples of implementation based on a single financial dataset available at \href{https://github.com/shokru/mlfactor.github.io/tree/master/material}{GitHub}. This dataset comprises information on 1,207 stocks listed in the US (possibly originating from Canada or Mexico). The time range starts in November 1998 and ends in March 2019. For each point in time, 93 characteristics describe the firms in the sample.
+
+The sample is not perfectly rectangular: there are no missing points, but the number of firms and their attributes is not constant through time. This makes the computations in the backtest more tricky, but also more realistic.
+
+There are four immediate labels in the dataset: \texttt{R1M\_Usd}, \texttt{R3M\_Usd}, \texttt{R6M\_Usd} and \texttt{R12M\_Usd}, which correspond to the 1-month, 3-month, 6-month and 12-month future/forward returns of the stocks. The returns are total returns, that is, they incorporate potential dividend payments over the considered periods. This is a better proxy of financial gain compared to price returns only.
+
+In anticipation for future models, we keep the name of the predictors in memory. In addition, we also keep a much shorter list of predictors.
+\begin{lstlisting}
+features <- colnames(data_ml[3:95]) # Keep the feature's column names (hard-coded, beware!)
+features_short <- c("Div_Yld", "Eps", "Mkt_Cap_12M_Usd", "Mom_11M_Usd",  "Ocf", "Pb", "Vol1Y_Usd")
+\end{lstlisting}
+
+The predictors have been uniformized, that is, for any given feature and time point, the distribution is uniform.
+
+The original labels (future returns) are numerical and will be used for regression exercises, that is, when the objective is to predict a scalar real number. Sometimes, the exercises can be different and the purpose may be to forecast categories (also called classes), like “buy”, “hold” or “sell”. In order to be able to perform this type of classification analysis, we create additional labels that are categorical
+\begin{lstlisting}
+data_ml <- data_ml %>% 
+group_by(date) %>%                                   # Group by date
+mutate(R1M_Usd_C = R1M_Usd > median(R1M_Usd),        # Create the categorical labels
+        R12M_Usd_C = R12M_Usd > median(R12M_Usd)) %>%
+ungroup() %>%
+mutate_if(is.logical, as.factor)
+\end{lstlisting}
+
+In machine learning, models are estimated on one portion of data (training set) and then tested on another portion of the data (testing set) to assess their quality. We split our sample accordingly.
+\begin{lstlisting}
+separation_date <- as.Date("2014-01-15")
+training_sample <- filter(data_ml, date < separation_date)
+testing_sample <- filter(data_ml, date >= separation_date)
+\end{lstlisting}

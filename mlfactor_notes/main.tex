@@ -1,0 +1,90 @@
+\documentclass[10pt, oneside]{amsdtx}
+
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{pifont}
+% \usepackage{mathpazo}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{enumitem}
+
+\newcommand{\codetext}[1]{{\texttt{#1}}}
+
+\definecolor{darkgreen}{rgb}{0.0, 0.5, 0.0}
+
+\lstset{
+  language = R,
+  basicstyle=\ttfamily\small, % Monospaced font to match Palatino's elegance
+  keywordstyle=\bfseries, % Bold blue for keywords
+  commentstyle=\itshape\color{gray}, % Italic green for comments
+  stringstyle=\color{darkgreen}, % Red for strings
+  stepnumber=5, % Number every line
+  breaklines=true, % Allow line breaking
+  tabsize=2, % Tab width
+}
+
+\numberwithin{equation}{section}
+
+\newcommand{\threedsquare}{\ding{113}}
+
+\newtheoremstyle{theorem}% name
+  {}%                                      Space above, empty = `usual value'
+  {}%                                      Space below
+  {\itshape}%                              Body font
+  {}%                                      Indent amount 
+  {\bfseries\color[HTML]{000575}}%         Head font
+  { – }%                                   Punctuation after head
+  { }%                                     Space after head: \newline = linebreak
+  {\threedsquare \, \thmnote{#3}}%         Head spec
+\theoremstyle{theorem}
+\newtheorem{thm}{Theorem}[section]
+
+\newtheoremstyle{definition}% name
+  {}%                                      Space above, empty = `usual value'
+  {}%                                      Space below
+  {\itshape}%                              Body font
+  {}%                                      Indent amount 
+  {\bfseries\color[HTML]{650000}}%         Head font
+  { – }%                                   Punctuation after head
+  { }%                                     Space after head: \newline = linebreak
+  {\threedsquare \, \thmnote{#3}}%         Head spec
+\theoremstyle{definition}
+\newtheorem{defn}{thm}[section]
+
+\title{Machine Learning for Factor Investing}
+\author{Albert Schrøder}
+
+
+\begin{document}
+
+\maketitle
+
+\newpage
+
+\chapter{Introduction}
+
+\input{part_1/1_notations_and_data.tex}
+
+\newpage
+
+\input{part_1/2_introduction.tex}
+
+\newpage
+
+\input{part_1/3_factor_investing_and_asset_pricing_anomalies.tex}
+
+\newpage
+
+\input{part_1/4_data_preprocessing.tex}
+
+\chapter{Common supervised algorithms}
+
+\input{part_2/tree_based_methods.tex}
+
+\end{document}  
